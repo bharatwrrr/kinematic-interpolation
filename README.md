@@ -3,7 +3,7 @@
 This repository provides a code for performing kinematic interpolation of vehicle trajectories (or anything that moves). 
 The interpolation considers real-world attributes like latitude, longitude, velocity, and heading angle, allowing for smooth trajectory estimation between sampled points.
 
-**NOTE: This is not a published Python package yet. I am still working on that part.**
+**NOTE: This is not a published Python package yet. I am still working on that part. Also, some functions in this repo are also a work in progress.**
 
 ## Features
 1. **Lat/Lon to Cartesian Conversion**: Easily convert geographic coordinates to Cartesian coordinates for accurate calculations.
