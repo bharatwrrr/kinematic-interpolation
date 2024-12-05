@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pyproj
 import matplotlib.pyplot as plt
+from abc import ABC, abstractmethod
+
 
 # Constants
 EPS = 1e-4
@@ -44,6 +46,51 @@ def kinematic_speed(t, v1, b, c):
 def kinematic_acceleration(t, b, c):
     """Computes acceleration at a given time using kinematic equations."""
     return b + t * c
+
+# Defining an abstract class for interpolation strategies
+class InterpolationStrategy(ABC):
+    @abstractmethod
+    def interpolate(self, t_s, x1, v1, x2, v2, t):
+        pass
+
+class LinearAccelerationInterpolation(InterpolationStrategy):
+    def interpolate(self, t_s, x1, v1, x2, v2, t):
+        # Solve for coefficients in x-direction
+        ax = np.array([[t**2 / 2, t**3 / 6], [t, t**2 / 2]])
+        bx = [x2[0] - x1[0] - v1[0] * t, v2[0] - v1[0]]
+        coef_x = np.linalg.solve(ax, bx)
+
+        # Solve for coefficients in y-direction
+        by = [x2[1] - x1[1] - v1[1] * t, v2[1] - v1[1]]
+        coef_y = np.linalg.solve(ax, by)
+
+        # Compute interpolated positions, velocities, and headings
+        x = kinematic_position(t_s, x1[0], v1[0], coef_x[0], coef_x[1])
+        y = kinematic_position(t_s, x1[1], v1[1], coef_y[0], coef_y[1])
+
+        vx = kinematic_speed(t_s, v1[0], coef_x[0], coef_x[1])
+        vy = kinematic_speed(t_s, v1[1], coef_y[0], coef_y[1])
+        v = np.sqrt(vx**2 + vy**2)
+
+        ax = kinematic_acceleration(t_s, coef_x[0], coef_x[1])
+        ay = kinematic_acceleration(t_s, coef_y[0], coef_y[1])
+        a = np.sqrt(ax**2 + ay**2)
+
+        heading = np.arctan2(vx, vy + EPS)
+        heading = np.where(heading < 0, heading + 2 * np.pi, heading)
+
+        return pd.DataFrame({
+            'x': x, 'y': y, 't': t_s, 'speed': v,
+            'acceleration': a, 'heading': np.rad2deg(heading)
+        })
+
+
+# TODO: Implement the ConstantAccelerationInterpolation class
+class ConstantAccelerationInterpolation(InterpolationStrategy):
+    def interpolate(self, t_s, x1, v1, x2, v2, t):
+        # Implementation for constant acceleration interpolation
+        pass
+
 
 def kinematic_interpolation(segment, t_s):
     """Performs kinematic interpolation for a single segment."""
@@ -89,8 +136,8 @@ def timestamp_to_seconds(timestamps):
     journey_time = [(ts - start_time).total_seconds() for ts in timestamps]
     return journey_time, start_time
 
-def interpolate_trajectory(df):
-    """Performs interpolation for the full trajectory."""
+def interpolate_trajectory(df, strategy: InterpolationStrategy, num_interpolations=100):
+    """Performs interpolation for the full trajectory using the specified strategy."""
     interpolated_points = pd.DataFrame()
     
     for i in range(len(df) - 1):
@@ -98,10 +145,11 @@ def interpolate_trajectory(df):
         t_start = df.iloc[i]['t']
         t_end = df.iloc[i+1]['t']
         
-        times = np.arange(t_start, t_end, 1) if t_end - t_start > 1 else np.array([t_start, t_end])
+        # Generate multiple intermediate time steps between t_start and t_end
+        times = np.linspace(t_start, t_end, num=num_interpolations)
         t_s = times - t_start
 
-        interpolated_segment = kinematic_interpolation(segment, t_s)
+        interpolated_segment = strategy.interpolate(t_s, segment[0, :2], segment[0, 3:5], segment[1, :2], segment[1, 3:5], t_end - t_start)
         interpolated_points = pd.concat([interpolated_points, interpolated_segment], ignore_index=True)
 
     return interpolated_points
