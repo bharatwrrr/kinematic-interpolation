@@ -8,8 +8,8 @@ MODULE_DIR_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if MODULE_DIR_PATH not in sys.path:
     sys.path.insert(0, MODULE_DIR_PATH)
 
-from kinematic_interpolation import (latlon_to_xy, xy_to_latlon, prepare_data, 
-                         timestamp_to_seconds, interpolate_full_trajectory)
+from kinematic_interpolation.kinematic_interpolation import (latlon_to_xy, xy_to_latlon, prepare_data, 
+                         timestamp_to_seconds, interpolate_trajectory)
 
 class TestKinematicInterpolation(unittest.TestCase):
 
@@ -55,7 +55,7 @@ class TestKinematicInterpolation(unittest.TestCase):
         self.assertIn('vy', df_prepared.columns)
         self.assertAlmostEqual(df_prepared['vx'].iloc[0], 0, places=5)  # Speed in x should be 0 for heading=0
 
-    def test_interpolate_full_trajectory(self):
+    def test_interpolate_trajectory(self):
         """Test full trajectory interpolation."""
         x_coords, y_coords = zip(*[latlon_to_xy(lat, lon) for lat, lon in zip(self.sample_lat, self.sample_lon)])
         t_seconds, start_time = timestamp_to_seconds(self.sample_time)
@@ -69,7 +69,7 @@ class TestKinematicInterpolation(unittest.TestCase):
         })
 
         df_prepared = prepare_data(df)
-        interpolated_points = interpolate_full_trajectory(df_prepared, start_time)
+        interpolated_points = interpolate_trajectory(df_prepared, start_time)
 
         # Check that interpolated points are generated
         self.assertGreater(len(interpolated_points), len(df))
