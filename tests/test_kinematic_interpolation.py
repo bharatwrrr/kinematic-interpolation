@@ -9,7 +9,7 @@ if MODULE_DIR_PATH not in sys.path:
     sys.path.insert(0, MODULE_DIR_PATH)
 
 from kinematic_interpolation.kinematic_interpolation import (latlon_to_xy, xy_to_latlon, prepare_data, 
-                         timestamp_to_seconds, interpolate_trajectory)
+                         timestamp_to_seconds, interpolate_trajectory, LinearAccelerationInterpolation)
 
 class TestKinematicInterpolation(unittest.TestCase):
 
@@ -69,7 +69,9 @@ class TestKinematicInterpolation(unittest.TestCase):
         })
 
         df_prepared = prepare_data(df)
-        interpolated_points = interpolate_trajectory(df_prepared, start_time)
+        interpolated_points = interpolate_trajectory(df_prepared, 
+                                                     strategy = LinearAccelerationInterpolation(),
+                                                     num_interpolations=10)
 
         # Check that interpolated points are generated
         self.assertGreater(len(interpolated_points), len(df))
