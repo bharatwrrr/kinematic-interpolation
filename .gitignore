@@ -3,3 +3,4 @@ k-interp/
 .ipynb_checkpoints
 __pycache__/
 *.egg-info/
+*.venv/
