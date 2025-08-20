@@ -62,15 +62,15 @@ class TestKinematicInterpolation(unittest.TestCase):
         })
 
         df_prepared = prepare_data(df)
-        num_interpolations = 1
+        num_interpolations = 2
         interpolated_points = interpolate_trajectory(df_prepared, 
                                                      strategy = LinearAccelerationInterpolation(),
                                                      num_interpolations=num_interpolations)
-
         # Check that interpolated points are generated
         # self.assertGreater(len(interpolated_points), len(df))
-        # print(interpolated_points, (len(df) - 1) * num_interpolations + 1)
-        # assert len(interpolated_points) == (len(df) - 1) * num_interpolations + 1, "Number of interpolated points is incorrect"
+        # print(len(interpolated_points), (len(df) - 1) * num_interpolations + 1)
+        assert len(interpolated_points) == (len(df)) * (num_interpolations + 1) - num_interpolations, "Number of interpolated points is incorrect"
+
 
         # Check that interpolated points contain lat/lon
         interpolated_latlon = [xy_to_latlon(row['x'], row['y']) for _, row in interpolated_points.iterrows()]
